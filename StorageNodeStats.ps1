@@ -11,7 +11,7 @@ $TotalExpectedPayout = 0
 $Hosts | ForEach-Object {
     $sno = Invoke-RestMethod -Uri ("http://{0}:14002/api/sno/" -f $_)
     $estimatedPayout = Invoke-RestMethod -Uri ("http://{0}:14002/api/sno/estimated-payout" -f $_)
-    $DiskUsed = $sno.diskSpace.used
+    $DiskUsed = $sno.diskSpace.used + $sno.diskSpace.trash
     $DiskUsedTB = [Math]::Round([UInt64]$DiskUsed / [Math]::Pow(10, 12), 3)
     $Stats += $DiskUsedTB
     $BandwidthUsed = $estimatedPayout.currentMonth.egressBandwidth
