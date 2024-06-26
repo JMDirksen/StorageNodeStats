@@ -1,14 +1,17 @@
-$Hosts = "host1.local", "host2.local"
-$DeploymentID = ".........."
-$KeepDays = 180
-$IntervalMinutes = 60
-
-$Limit = $KeepDays * 24 * 60 / $IntervalMinutes
+If (-not (Test-Path 'StorageNodeStats.json')) {
+    $Settings = @{}
+    $Settings.Hosts = @('localhost')
+    $Settings.DeploymentID = ""
+    $Settings.KeepDays = 60
+    $Settings.IntervalMinutes = 180
+    $Settings | ConvertTo-Json | Set-Content -Path 'StorageNodeStats.json'
+}
+$Settings = Get-Content -Path 'StorageNodeStats.json' | ConvertFrom-Json
 
 $Stats = @()
 $TotalPayout = 0
 $TotalExpectedPayout = 0
-$Hosts | ForEach-Object {
+$Settings.Hosts | ForEach-Object {
     $sno = Invoke-RestMethod -Uri ("http://{0}:14002/api/sno/" -f $_)
     $estimatedPayout = Invoke-RestMethod -Uri ("http://{0}:14002/api/sno/estimated-payout" -f $_)
     $DiskUsed = $sno.diskSpace.used + $sno.diskSpace.trash
@@ -25,6 +28,7 @@ $TotalExpectedPayout = [Math]::Round([UInt64]$TotalExpectedPayout / 100, 2)
 $Stats += $TotalPayout
 $Stats += $TotalExpectedPayout
 
+$Limit = $Settings.KeepDays * 24 * 60 / $Settings.IntervalMinutes
 $Stats = (@((Get-Date).ToString("yyyy-MM-dd HH:mm")) + $Stats) -join ";"
-$Uri = "https://script.google.com/macros/s/{0}/exec?stats={1}&limit={2}" -f $DeploymentID, $Stats, $Limit
+$Uri = "https://script.google.com/macros/s/{0}/exec?stats={1}&limit={2}" -f $Settings.DeploymentID, $Stats, $Limit
 Invoke-WebRequest -Uri $Uri | Out-Null
