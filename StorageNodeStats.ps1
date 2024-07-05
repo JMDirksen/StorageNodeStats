@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 If (-not (Test-Path 'StorageNodeStats.json')) {
     $Settings = @{}
     $Settings.Hosts = @('localhost')
