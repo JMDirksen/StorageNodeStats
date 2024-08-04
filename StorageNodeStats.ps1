@@ -2,15 +2,7 @@ $ErrorActionPreference = "Stop"
 
 function Main {
     try {
-        If (-not (Test-Path 'StorageNodeStats.json')) {
-            $Settings = @{}
-            $Settings.Hosts = @('localhost')
-            $Settings.DeploymentID = ""
-            $Settings.KeepDays = 60
-            $Settings.IntervalMinutes = 180
-            $Settings | ConvertTo-Json | Set-Content -Path 'StorageNodeStats.json'
-        }
-        $Settings = Get-Content -Path 'StorageNodeStats.json' | ConvertFrom-Json        
+        $Settings = Get-Settings .\StorageNodeStats.json
 
         $TotalDisk = 0
         $TotalDiskUsed = 0
@@ -27,6 +19,7 @@ function Main {
         }
 
         $Stats = @(
+            ((Get-Date).ToString("yyyy-MM-dd HH:mm")),
             (ConvertTo-Terabytes -Bytes $TotalDisk),
             (ConvertTo-Terabytes -Bytes $TotalDiskUsed),
             (ConvertTo-Terabytes -Bytes $TotalBandwidthUsed),
@@ -34,9 +27,14 @@ function Main {
             (ConvertTo-Dollar -DollarCents $TotalExpectedPayout)
         )
 
-        $Limit = $Settings.KeepDays * 24 * 60 / $Settings.IntervalMinutes
-        $Stats = (@((Get-Date).ToString("yyyy-MM-dd HH:mm")) + $Stats) -join ";"
-        $Uri = "https://script.google.com/macros/s/{0}/exec?stats={1}&limit={2}" -f $Settings.DeploymentID, $Stats, $Limit
+        $Uri = "https://script.google.com/macros/s/{0}/exec?stats={1}&limit={2}" -f @(
+            # Google Apps Script Deployment ID
+            $Settings.DeploymentID,
+            # Joined stats
+            ($Stats -join ";"),
+            # Row limit
+            ($Settings.KeepDays * 24 * 60 / $Settings.IntervalMinutes)
+        )
         Invoke-WebRequest -Uri $Uri | Out-Null
     }
     catch {
@@ -45,7 +43,19 @@ function Main {
     }
 }
 
-function Invoke-Api ([String]$HostAddress) {
+function Get-Settings ([string]$FileName) {
+    If (-not (Test-Path $FileName)) {
+        $Settings = @{}
+        $Settings.Hosts = @('localhost')
+        $Settings.DeploymentID = ""
+        $Settings.KeepDays = 60
+        $Settings.IntervalMinutes = 180
+        $Settings | ConvertTo-Json | Set-Content -Path $FileName
+    }
+    Get-Content -Path $FileName | ConvertFrom-Json
+}
+
+function Invoke-Api ([string]$HostAddress) {
     $api = "http://$HostAddress/api"
     try {
         $sno = Invoke-RestMethod -Uri "$api/sno/"
