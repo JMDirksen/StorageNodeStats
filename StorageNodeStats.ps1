@@ -38,7 +38,7 @@ function Main {
         Invoke-WebRequest -Uri $Uri | Out-Null
     }
     catch {
-        Log $_
+        Log -Message "Error in Main." -Exception $_
         throw
     }
 }
@@ -64,7 +64,7 @@ function Invoke-Api ([string]$HostAddress) {
         return $sno
     }
     catch {
-        Log $_
+        Log -Message "Error connecting to $api." -Exception $_
         return
     }
 }
@@ -77,9 +77,9 @@ function ConvertTo-Dollar ([int]$DollarCents) {
     [Math]::Round($DollarCents / 100, 2)
 }
 
-function Log ($e) {
+function Log ([string]$Message, [System.Management.Automation.ErrorRecord]$Exception) {
     $TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $Value = "{0} {1} @ Ln {2}, Col {3}" -f $TimeStamp, $e, $e.InvocationInfo.ScriptLineNumber, $e.InvocationInfo.OffsetInLine
+    $Value = "{0} {1} {2} @ Ln {3}, Col {4}" -f $TimeStamp, $Message, $Exception, $Exception.InvocationInfo.ScriptLineNumber, $Exception.InvocationInfo.OffsetInLine
     Add-Content -Path "StorageNodeStats.log" -Value $Value
 }
 
