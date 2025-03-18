@@ -24,7 +24,9 @@ function Main {
             (ConvertTo-Terabytes -Bytes $TotalDiskUsed),
             (ConvertTo-Terabytes -Bytes $TotalBandwidthUsed),
             (ConvertTo-Dollar -DollarCents $TotalPayout),
-            (ConvertTo-Dollar -DollarCents $TotalExpectedPayout)
+            (ConvertTo-Dollar -DollarCents $TotalExpectedPayout),
+            "=MAX(0\; INDIRECT(ADDRESS(ROW()\; COLUMN()-3))-INDIRECT(ADDRESS(ROW()-1\; COLUMN()-3)))",
+            "=MAX(0\; INDIRECT(ADDRESS(ROW()\; COLUMN()-3))-INDIRECT(ADDRESS(ROW()-1\; COLUMN()-3)))"
         )
 
         $Uri = "https://script.google.com/macros/s/{0}/exec?stats={1}&limit={2}" -f @(
